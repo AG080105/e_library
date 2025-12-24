@@ -1,25 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-/// Entry point of the E-Library Flutter application.
-/// Initializes and runs the app.
 void main() {
   runApp(const ELibraryApp());
 }
 
 // ===================== MODELS ===================== Ashley ito
-
-/// Represents a book in the e-library.
-/// Contains basic information about a book including title, publication year,
-/// PDF URL for downloading, and cover image URL.
+/*
+So itong mga code dito ay nagde-define ng mga modelo para sa Book at FeedbackModel.
+Ang Book class ay may apat na properties: title, year, pdfUrl, at coverUrl
+*/
 class Book {
   final String title;
   final String year;
   final String pdfUrl;
   final String coverUrl;
 
-  /// Creates a new Book instance.
-  /// All parameters are required.
   Book({
     required this.title,
     required this.year,
@@ -28,34 +24,27 @@ class Book {
   });
 }
 
-/// Represents user feedback with a comment and rating.
-/// Used to collect user opinions about the app.
+//Ito ay yung makikita sa ano pag nag rerate sa settings ata yun basta makikita yung rating at comment
 class FeedbackModel {
   final String comment;
   final int rating;
-
-  /// Creates a new FeedbackModel instance.
   FeedbackModel(this.comment, this.rating);
 }
 
 // ===================== GLOBAL STATE ===================== Ashley ito
-
-/// Global list of all books available in the library.
-/// This list is shared across the app and modified by admin functions.
+/*
+Ito naman ay yung global state ng application kung saan nilalagay yung mga listahan ng books, downloadedBooks, at feedbacks.
+*/
 List<Book> books = [];
-
-/// Global list of books that have been downloaded by the user.
-/// Tracks which books the user has accessed.
 List<Book> downloadedBooks = [];
-
-/// Global list of user feedback submissions.
-/// Stores all feedback provided by users.
 List<FeedbackModel> feedbacks = [];
 
 // ===================== APP ROOT ===================== Ashley ito
 
-/// Root widget of the E-Library application.
-/// Configures the MaterialApp with dark theme and navigation.
+/*
+Ito ay yung mga code na nagpapakita ng primary screen ng applicaton.
+Balee andito nakabilang yung background color, primary colors, at iba pa na tema ng app.
+*/
 class ELibraryApp extends StatelessWidget {
   const ELibraryApp({super.key});
 
@@ -86,9 +75,9 @@ class ELibraryApp extends StatelessWidget {
 }
 
 // ===================== HOME (FIXED) ===================== Mich ito
-
-/// Home screen displaying the list of available books.
-/// Allows navigation to the menu and shows books in a list view.
+/*
+Dito naman ay yung home screen, pero dito ay yung dlwang nakalagay sa screen which is yung word at yung word button sa appbar.
+*/
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
@@ -107,7 +96,7 @@ class _HomeScreenState extends State<HomeScreen> {
               context,
               MaterialPageRoute(builder: (_) => const MenuScreen()),
             );
-            setState(() {}); // 🔥 REFRESH AFTER RETURN
+            setState(() {}); // Refresh state when returning from menu
           },
           child: const Text('E-Library'),
         ),
@@ -129,9 +118,11 @@ class _HomeScreenState extends State<HomeScreen> {
 }
 
 // ===================== MENU ===================== Mich ito
-
-/// Menu screen providing navigation to different sections of the app.
-/// Includes options for viewing books by year, feedback, and admin settings.
+/*
+Ang primary use nito ay yung pag pinindot na yung E-Library sa home screen
+Ipupunta ka non sa Menu screen which is yung tatlong title context sa ibaba
+plus colors lng nila at icons
+*/
 class MenuScreen extends StatelessWidget {
   const MenuScreen({super.key});
 
@@ -149,8 +140,6 @@ class MenuScreen extends StatelessWidget {
     );
   }
 
-  /// Creates a navigation tile for the menu list.
-  /// [c] is the build context, [t] is the title, [i] is the icon, [p] is the page to navigate to.
   Widget tile(BuildContext c, String t, IconData i, Widget p) {
     return ListTile(
       leading: Icon(i, color: const Color(0xFF00FF88)),
@@ -161,14 +150,14 @@ class MenuScreen extends StatelessWidget {
 }
 
 // ===================== BOOK TILE ===================== Mich ito
-
-/// Widget representing a single book item in a list.
-/// Displays book cover, title, year, and provides download functionality.
+/*
+Dito sa section na ito nakalagay yung BookTile class na siyang nagre-render ng bawat book sa listahan.
+Sa loob ng BookTile, mayroong method na openAndDownload na nagbubukas ng PDF URL ng book at idinadagdag ito sa downloadedBooks list kung hindi pa ito nandoon.
+*/
 class BookTile extends StatelessWidget {
   final Book book;
   const BookTile({super.key, required this.book});
-
-  /// Opens the book's PDF in an external application and marks it as downloaded.
+//So dito ay server end na nagbubukas ng nilalagay mo na URl sa pdfUrl ng Book model
   Future<void> openAndDownload() async {
     final uri = Uri.parse(book.pdfUrl);
     if (await canLaunchUrl(uri)) {
@@ -179,6 +168,10 @@ class BookTile extends StatelessWidget {
     }
   }
 
+/*ito naman yung UI ng BookTile kung paano siya mag-aappear sa screen
+Dito din pala belong yung handlers ng mga button sa loob ng book tiles 
+like yung Dl button and yung pag click sa tile mismo
+*/
   @override
   Widget build(BuildContext context) {
     return Card(
@@ -203,27 +196,32 @@ class BookTile extends StatelessWidget {
 }
 
 // ===================== BOOKS BY YEAR ===================== Corrales ito
-
-/// Screen displaying books organized by academic year.
-/// Allows adding new books and viewing books grouped by year.
+/*
+Ito ay yung sa ano sa loob ng MENU
+Ito yung part ng BOOKS BY YEAR button, na nagpupush ng new screen
+Nag nagpapakita ng new contents which are yung apat na year na kung saan ka pwede mag lagay ng laman 
+sa pamamagitan ng + sign na button sa end side ng screen sa baba
+*/
 class BookYearScreen extends StatelessWidget {
   const BookYearScreen({super.key});
-
+//Itong part yung front end specifically
   @override
   Widget build(BuildContext context) {
     final years = ['1st Year', '2nd Year', '3rd Year', '4th Year'];
     return Scaffold(
       appBar: AppBar(title: const Text('Books by Year')),
       floatingActionButton: FloatingActionButton(
-        child: const Icon(Icons.add),
+        child: const Icon(Icons.add), //Dito yung sign na button sa baba
         onPressed: () async {
           await Navigator.push(
+            //Dito yung handler ng plus sign button na magpupush ng new screen
             context,
             MaterialPageRoute(builder: (_) => const AddBookScreen()),
           );
         },
       ),
       body: ListView(
+        //Mula dito nagsisimula yung listahan ng books by year, like yung may dropdown shit sa mga year sa BOOK BY YEAR na table
         children: years.map((y) {
           return ExpansionTile(
             title: Text(y, style: const TextStyle(color: Color(0xFF00FF88))),
@@ -239,9 +237,11 @@ class BookYearScreen extends StatelessWidget {
 }
 
 // ===================== ADD BOOK ===================== Corrales ito
-
-/// Screen for adding new books to the library.
-/// Provides form fields for book details and saves to global books list.
+/*
+Dito is yung about sa pag add na ng book tlga
+Balee ito yung nasa prang fill-up phase ka after mo ma click yung plus sign button
+Ispecify ko nlng per block or per line
+*/
 class AddBookScreen extends StatefulWidget {
   const AddBookScreen({super.key});
 
@@ -249,6 +249,7 @@ class AddBookScreen extends StatefulWidget {
   State<AddBookScreen> createState() => _AddBookScreenState();
 }
 
+//So balee dito ay yung makikita mo bilang main shit ng fill-up screen
 class _AddBookScreenState extends State<AddBookScreen> {
   final title = TextEditingController();
   final pdf = TextEditingController();
@@ -258,34 +259,47 @@ class _AddBookScreenState extends State<AddBookScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Add Book')),
+      appBar: AppBar(
+          title: const Text(
+              'Add Book')), //Balee ito ay yung title lng sa appBar ng ano sa fill-up screen
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
-            field(title, 'Title'),
+            field(title,
+                'Title'), //Ito ay yung nakasulat sa unang line ng fill-up screen
             DropdownButton<String>(
               value: year,
               isExpanded: true,
-              items: ['1st Year', '2nd Year', '3rd Year', '4th Year']
+              items: [
+                '1st Year',
+                '2nd Year',
+                '3rd Year',
+                '4th Year'
+              ] //Ito naman ay supporting shit dun sa dropdown sa year nmn
                   .map((y) => DropdownMenuItem(value: y, child: Text(y)))
                   .toList(),
-              onChanged: (v) => setState(() => year = v!),
+              onChanged: (v) => setState(() => year =
+                  v!), //Ito ay yung handler ng dropdown button, like pag nakapili ka na, yun na din yung lalabas
             ),
-            field(pdf, 'PDF URL'),
-            field(cover, 'Cover URL'),
+            field(pdf, 'PDF URL'), //Ito yung about sa PDF na textfield
+            field(cover,
+                'Cover URL'), //Ito ay same lng din sa PDF textfield, which is ito ay about sa Cover text field, pweede nga ito lagyan ng picsum.photos eh kaso kasi di aayon sa black/green theme ntin
             const SizedBox(height: 20),
             ElevatedButton(
               onPressed: () {
+                //Mula dito ay yung didiscuss ko sa presentation day ntin, ito yung ilalagay sa properties
                 books.add(Book(
                   title: title.text,
                   year: year,
                   pdfUrl: pdf.text,
                   coverUrl: cover.text,
                 ));
-                Navigator.pop(context);
+                Navigator.pop(
+                    context); //Ito yung kapag done na sa fill-up screen, kaya nakapaloob sya sa onPressed handler ng ADD BOOK button
               },
-              child: const Text('ADD BOOK'),
+              child: const Text(
+                  'ADD BOOK'), //Ito ay yung button lng sa center eh, alam mo na ito Corrales, ikaw pa
             ),
           ],
         ),
@@ -293,8 +307,7 @@ class _AddBookScreenState extends State<AddBookScreen> {
     );
   }
 
-  /// Creates a text input field with label.
-  /// [c] is the text controller, [l] is the label text.
+// Dito naman ay yung kung saan ka mag fifill-up sa fil-up screen
   Widget field(TextEditingController c, String l) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
@@ -306,10 +319,12 @@ class _AddBookScreenState extends State<AddBookScreen> {
   }
 }
 
-// ===================== FEEDBACK ===================== Corrales ito
-
-/// Screen for submitting and viewing user feedback.
-/// Allows users to submit anonymous comments and ratings, and displays all feedback.
+// ===================== FEEDBACK ===================== Sai ito
+/*
+So dito naman nakalgay yung mga bgay bgay sa code na naghahandle ng feedback screen
+like yung comment box, yung rating, at yung submit button pra maipasa yugn feedback
+plus, yung guhit sa baba which is yung mga listahan ng mga feedback na naipasa na
+*/
 class FeedbackScreen extends StatefulWidget {
   const FeedbackScreen({super.key});
 
@@ -317,10 +332,25 @@ class FeedbackScreen extends StatefulWidget {
   State<FeedbackScreen> createState() => _FeedbackScreenState();
 }
 
+// dito naman yung part specifically ng feedback screen
+// kung saan nakalagay yung UI at yung mga handlers ng mga button sa loob ng feedback screen
 class _FeedbackScreenState extends State<FeedbackScreen> {
-  final comment = TextEditingController();
-  int rating = 5;
+  final comment =
+      TextEditingController(); //Dito ay yung textfield for the comment
+  int rating =
+      5; //Dito naman ay yung rating default, balee yung number na makikita mo sa dropdown bago mo pindutin
+  static const List<String> ratinglabels = [
+    'Very bad',
+    'Bad',
+    'Saks',
+    'Good',
+    'Very Good'
+  ];
 
+/*
+Dito nmn ay yung UI ng FEEDBACK screen
+Kasma na rin dito ay yng mga handlers
+*/
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -339,13 +369,17 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
                 DropdownButton<int>(
                   value: rating,
                   items: List.generate(5, (i) => i + 1)
-                      .map((r) =>
-                          DropdownMenuItem(value: r, child: Text('Rating $r')))
+                      .map((r) => DropdownMenuItem(
+                          value: r,
+                          child: Text(ratinglabels[r -
+                              1]))) //ito ay yung mga numbers na prsent sa dropdown
                       .toList(),
-                  onChanged: (v) => setState(() => rating = v!),
+                  onChanged: (v) => setState(() => rating =
+                      v!), //While ito yung pag nakapili ka na ng number sa ay yun na ang ididisplay ng screen pra sayo
                 ),
                 ElevatedButton(
                   onPressed: () {
+                    //Ito yung handler ng SUBMIT button
                     feedbacks.add(FeedbackModel(comment.text, rating));
                     comment.clear();
                     setState(() {});
@@ -355,13 +389,15 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
               ],
             ),
           ),
-          const Divider(),
+          const Divider(), // Ito ay yung guhit na mahaba sa baba ng SUBMIT button
           Expanded(
             child: ListView(
               children: feedbacks
                   .map((f) => ListTile(
+                        //Itong part ay yung mga listahan sa UI na kung saan nakikita yung mga fedback na pinasa or sinubmit
                         title: Text(f.comment),
-                        trailing: Text('${f.rating}/5'),
+                        trailing: Text(ratinglabels[f.rating -
+                            1]), //Ito sa part ng rating, sa gilid tlga toh makikita eh
                       ))
                   .toList(),
             ),
@@ -373,12 +409,12 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
 }
 
 // ===================== ADMIN ===================== Sai ito
-
-/// Admin panel screen for managing app data.
-/// Provides options to delete books, feedback, and view downloaded books.
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
-
+/*
+Dito naman ay yung mga related sa ADMIN screen
+Like yung mga buttons na nasa adminTile methods
+*/
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -394,17 +430,19 @@ class SettingsScreen extends StatelessWidget {
             child: Text('Downloaded Books',
                 style: TextStyle(color: Color(0xFF00FF88), fontSize: 18)),
           ),
-          ...downloadedBooks.map((b) => ListTile(title: Text(b.title))),
+          ...downloadedBooks.map((b) => ListTile(
+              title: Text(b
+                  .title))), //Ito yung malaking black part ng ADMIN screen, sya rin yugn may sublabel na 'Downloaded Books'
         ],
       ),
     );
   }
 
-  /// Creates an admin action tile for the settings list.
-  /// [t] is the title, [a] is the action callback.
   Widget adminTile(String t, VoidCallback a) {
     return ListTile(
-      leading: const Icon(Icons.delete, color: Colors.redAccent),
+      leading: const Icon(Icons.delete,
+          color: Colors
+              .redAccent), //Alam mo na ito, sila yung basurahan na icon Sai
       title: Text(t),
       onTap: a,
     );
