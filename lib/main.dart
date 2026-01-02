@@ -288,15 +288,22 @@ class _AddBookScreenState extends State<AddBookScreen> {
             const SizedBox(height: 20),
             ElevatedButton(
               onPressed: () {
-                //Mula dito ay yung didiscuss ko sa presentation day ntin, ito yung ilalagay sa properties
-                books.add(Book(
-                  title: title.text,
-                  year: year,
-                  pdfUrl: pdf.text,
-                  coverUrl: cover.text,
-                ));
-                Navigator.pop(
-                    context); //Ito yung kapag done na sa fill-up screen, kaya nakapaloob sya sa onPressed handler ng ADD BOOK button
+                if (pdf.text.isEmpty) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                        content: Text('Kailangan ng URL sa PDF broh')),
+                  );
+                } else {
+                  //Mula dito ay yung didiscuss ko sa presentation day ntin, ito yung ilalagay sa properties
+                  books.add(Book(
+                    title: title.text,
+                    year: year,
+                    pdfUrl: pdf.text,
+                    coverUrl: cover.text,
+                  ));
+                  Navigator.pop(
+                      context); //Ito yung kapag done na sa fill-up screen, kaya nakapaloob sya sa onPressed handler ng ADD BOOK button
+                }
               },
               child: const Text(
                   'ADD BOOK'), //Ito ay yung button lng sa center eh, alam mo na ito Corrales, ikaw pa
