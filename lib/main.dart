@@ -284,8 +284,10 @@ class _AddBookScreenState extends State<AddBookScreen> {
             ),
             field(pdf, 'PDF URL'), //Ito yung about sa PDF na textfield
             field(cover,
-                'Cover URL'), //Ito ay same lng din sa PDF textfield, which is ito ay about sa Cover text field, pweede nga ito lagyan ng picsum.photos eh kaso kasi di aayon sa black/green theme ntin
-            const SizedBox(height: 20),
+                'Cover URL'), //Ito ay same lng din sa PDF textfield, which is ito ay about sa Cover text field,
+            const SizedBox(
+                height:
+                    20), // pweede nga ito lagyan ng picsum.photos eh kaso kasi di aayon sa black/green theme ntin
             ElevatedButton(
               onPressed: () {
                 if (pdf.text.isEmpty) {

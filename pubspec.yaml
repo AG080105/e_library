@@ -35,7 +35,7 @@ dependencies:
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.8
   url_launcher: ^6.1.14  # Add this for handling URLs in web
-  universal_html: ^2.2.4  # Add this for better web support`
+  universal_html: ^2.2.4  # Add this for better web support
   web_browser: ^0.7.4  # Add this for better web browser support
 
 dev_dependencies:
