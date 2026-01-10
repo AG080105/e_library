@@ -28,7 +28,8 @@ class Book {
 class FeedbackModel {
   final String comment;
   final int rating;
-  FeedbackModel(this.comment, this.rating);
+  final String? year;
+  FeedbackModel(this.comment, this.rating, [this.year]);
 }
 
 // ===================== GLOBAL STATE ===================== Ashley ito
@@ -59,6 +60,9 @@ class ELibraryApp extends StatelessWidget {
           primary: Color(0xFF00FF88),
           secondary: Color(0xFF00FF88),
         ),
+        textTheme: ThemeData.dark().textTheme.apply(
+              fontFamily: 'monospace',
+            ),
         appBarTheme: const AppBarTheme(
           backgroundColor: Colors.black,
           centerTitle: true,
@@ -66,6 +70,18 @@ class ELibraryApp extends StatelessWidget {
             color: Color(0xFF00FF88),
             fontSize: 22,
             fontWeight: FontWeight.bold,
+            fontFamily: 'monospace',
+          ),
+        ),
+        elevatedButtonTheme: ElevatedButtonThemeData(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: const Color(0xFF00FF88),
+            foregroundColor: Colors.black,
+            shadowColor: const Color(0xFF00FF88).withAlpha(128),
+            elevation: 5,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
           ),
         ),
       ),
@@ -134,17 +150,27 @@ class MenuScreen extends StatelessWidget {
         children: [
           tile(context, 'Books by Year', Icons.book, const BookYearScreen()),
           tile(context, 'Feedback', Icons.feedback, const FeedbackScreen()),
-          tile(context, 'Admin', Icons.settings, const SettingsScreen()),
+          tile(context, 'Settings', Icons.settings, const SettingsScreen()),
         ],
       ),
     );
   }
 
   Widget tile(BuildContext c, String t, IconData i, Widget p) {
-    return ListTile(
-      leading: Icon(i, color: const Color(0xFF00FF88)),
-      title: Text(t),
-      onTap: () => Navigator.push(c, MaterialPageRoute(builder: (_) => p)),
+    return Card(
+      color: const Color(0xFF0A0F0C),
+      margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(8),
+        side: const BorderSide(color: Color(0xFF00FF88), width: 1),
+      ),
+      child: ListTile(
+        leading: Icon(i, color: const Color(0xFF00FF88), size: 28),
+        title: Text(t,
+            style: const TextStyle(
+                color: Color(0xFF00FF88), fontFamily: 'monospace')),
+        onTap: () => Navigator.push(c, MaterialPageRoute(builder: (_) => p)),
+      ),
     );
   }
 }
@@ -158,13 +184,23 @@ class BookTile extends StatelessWidget {
   final Book book;
   const BookTile({super.key, required this.book});
 //So dito ay server end na nagbubukas ng nilalagay mo na URl sa pdfUrl ng Book model
-  Future<void> openAndDownload() async {
-    final uri = Uri.parse(book.pdfUrl);
-    if (await canLaunchUrl(uri)) {
-      await launchUrl(uri, mode: LaunchMode.externalApplication);
-      if (!downloadedBooks.contains(book)) {
-        downloadedBooks.add(book);
+  Future<void> openAndDownload(BuildContext context) async {
+    try {
+      final uri = Uri.parse(book.pdfUrl);
+      if (await canLaunchUrl(uri)) {
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
+        if (!downloadedBooks.contains(book)) {
+          downloadedBooks.add(book);
+        }
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Cannot open this URL')),
+        );
       }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Error opening PDF')),
+      );
     }
   }
 
@@ -177,19 +213,39 @@ like yung Dl button and yung pag click sa tile mismo
     return Card(
       color: const Color(0xFF0A0F0C),
       child: ListTile(
-        leading: Image.network(
-          book.coverUrl,
+        leading: Container(
           width: 50,
-          errorBuilder: (_, __, ___) =>
-              const Icon(Icons.book, color: Color(0xFF00FF88)),
+          height: 50,
+          decoration: BoxDecoration(
+            border: Border.all(color: const Color(0xFF00FF88), width: 2),
+            borderRadius: BorderRadius.circular(4),
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(2),
+            child: Image.network(
+              book.coverUrl,
+              fit: BoxFit.cover,
+              loadingBuilder: (context, child, loadingProgress) {
+                if (loadingProgress == null) return child;
+                return const Center(
+                  child: CircularProgressIndicator(
+                    valueColor:
+                        AlwaysStoppedAnimation<Color>(Color(0xFF00FF88)),
+                  ),
+                );
+              },
+              errorBuilder: (_, __, ___) =>
+                  const Icon(Icons.book, color: Color(0xFF00FF88)),
+            ),
+          ),
         ),
         title: Text(book.title),
         subtitle: Text(book.year),
         trailing: IconButton(
           icon: const Icon(Icons.download, color: Color(0xFF00FF88)),
-          onPressed: openAndDownload,
+          onPressed: () => openAndDownload(context),
         ),
-        onTap: openAndDownload,
+        onTap: () => openAndDownload(context),
       ),
     );
   }
@@ -256,6 +312,16 @@ class _AddBookScreenState extends State<AddBookScreen> {
   final cover = TextEditingController();
   String year = '1st Year';
 
+  // Helper function to validate URL
+  bool _isValidUrl(String url) {
+    try {
+      final uri = Uri.parse(url);
+      return uri.scheme == 'http' || uri.scheme == 'https';
+    } catch (_) {
+      return false;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -284,31 +350,43 @@ class _AddBookScreenState extends State<AddBookScreen> {
             ),
             field(pdf, 'PDF URL'), //Ito yung about sa PDF na textfield
             field(cover,
-                'Cover URL'), //Ito ay same lng din sa PDF textfield, which is ito ay about sa Cover text field,
+                'Cover URL (optional)'), //Ito ay same lng din sa PDF textfield, which is ito ay about sa Cover text field,
             const SizedBox(
                 height:
                     20), // pweede nga ito lagyan ng picsum.photos eh kaso kasi di aayon sa black/green theme ntin
             ElevatedButton(
               onPressed: () {
-                if (pdf.text.isEmpty) {
+                if (title.text.isEmpty) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Title is required')),
+                  );
+                  return;
+                }
+                if (pdf.text.isEmpty || !_isValidUrl(pdf.text)) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Valid PDF URL is required')),
+                  );
+                  return;
+                }
+                if (cover.text.isNotEmpty && !_isValidUrl(cover.text)) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
-                        content: Text('Kailangan ng URL sa PDF broh')),
+                        content: Text('Cover URL must be valid if provided')),
                   );
-                } else {
-                  //Mula dito ay yung didiscuss ko sa presentation day ntin, ito yung ilalagay sa properties
-                  books.add(Book(
-                    title: title.text,
-                    year: year,
-                    pdfUrl: pdf.text,
-                    coverUrl: cover.text,
-                  ));
-                  Navigator.pop(
-                      context); //Ito yung kapag done na sa fill-up screen, kaya nakapaloob sya sa onPressed handler ng ADD BOOK button
+                  return;
                 }
+                //Mula dito ay yung didiscuss ko sa presentation day ntin, ito yung ilalagay sa properties
+                books.add(Book(
+                  title: title.text,
+                  year: year,
+                  pdfUrl: pdf.text,
+                  coverUrl: cover.text.isNotEmpty
+                      ? cover.text
+                      : 'https://picsum.photos/200/300',
+                ));
+                Navigator.pop(context);
               },
-              child: const Text(
-                  'ADD BOOK'), //Ito ay yung button lng sa center eh, alam mo na ito Corrales, ikaw pa
+              child: const Text('ADD BOOK'),
             ),
           ],
         ),
@@ -322,7 +400,18 @@ class _AddBookScreenState extends State<AddBookScreen> {
       padding: const EdgeInsets.only(bottom: 12),
       child: TextField(
         controller: c,
-        decoration: InputDecoration(labelText: l),
+        style:
+            const TextStyle(color: Color(0xFF00FF88), fontFamily: 'monospace'),
+        decoration: InputDecoration(
+          labelText: l,
+          labelStyle: const TextStyle(color: Color(0xFF00FF88)),
+          enabledBorder: const OutlineInputBorder(
+            borderSide: BorderSide(color: Color(0xFF00FF88), width: 2),
+          ),
+          focusedBorder: const OutlineInputBorder(
+            borderSide: BorderSide(color: Color(0xFF00FF88), width: 3),
+          ),
+        ),
       ),
     );
   }
@@ -348,6 +437,7 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
       TextEditingController(); //Dito ay yung textfield for the comment
   int rating =
       5; //Dito naman ay yung rating default, balee yung number na makikita mo sa dropdown bago mo pindutin
+  String year = '1st Year'; // Add year selection
   static const List<String> ratinglabels = [
     'Very bad',
     'Bad',
@@ -372,8 +462,7 @@ Kasma na rin dito ay yng mga handlers
               children: [
                 TextField(
                   controller: comment,
-                  decoration:
-                      const InputDecoration(labelText: 'Anonymous Comment'),
+                  decoration: const InputDecoration(labelText: 'Anonymous Comment'),
                 ),
                 DropdownButton<int>(
                   value: rating,
@@ -386,10 +475,21 @@ Kasma na rin dito ay yng mga handlers
                   onChanged: (v) => setState(() => rating =
                       v!), //While ito yung pag nakapili ka na ng number sa ay yun na ang ididisplay ng screen pra sayo
                 ),
+                DropdownButton<String>(
+                  value: year,
+                  isExpanded: true,
+                  items: [
+                    '1st Year',
+                    '2nd Year',
+                    '3rd Year',
+                    '4th Year'
+                  ].map((y) => DropdownMenuItem(value: y, child: Text(y))).toList(),
+                  onChanged: (v) => setState(() => year = v!),
+                ),
                 ElevatedButton(
                   onPressed: () {
                     //Ito yung handler ng SUBMIT button
-                    feedbacks.add(FeedbackModel(comment.text, rating));
+                    feedbacks.add(FeedbackModel(comment.text, rating, year));
                     comment.clear();
                     setState(() {});
                   },
@@ -403,10 +503,34 @@ Kasma na rin dito ay yng mga handlers
             child: ListView(
               children: feedbacks
                   .map((f) => ListTile(
-                        //Itong part ay yung mga listahan sa UI na kung saan nakikita yung mga fedback na pinasa or sinubmit
-                        title: Text(f.comment),
-                        trailing: Text(ratinglabels[f.rating -
-                            1]), //Ito sa part ng rating, sa gilid tlga toh makikita eh
+                        title: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              f.year ?? 'General',
+                              style: const TextStyle(
+                                color: Color(0xFF00FF88),
+                                fontSize: 14,
+                                fontFamily: 'monospace',
+                              ),
+                            ),
+                            Text(
+                              ratinglabels[f.rating - 1],
+                              style: const TextStyle(
+                                color: Color(0xFF00FF88),
+                                fontSize: 14,
+                                fontFamily: 'monospace',
+                              ),
+                            ),
+                          ],
+                        ),
+                        subtitle: Text(
+                          f.comment,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontFamily: 'monospace',
+                          ),
+                        ),
                       ))
                   .toList(),
             ),
@@ -418,30 +542,38 @@ Kasma na rin dito ay yng mga handlers
 }
 
 // ===================== ADMIN ===================== Sai ito
-class SettingsScreen extends StatelessWidget {
+class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
-/*
-Dito naman ay yung mga related sa ADMIN screen
-Like yung mga buttons na nasa adminTile methods
-*/
+
+  @override
+  State<SettingsScreen> createState() => _SettingsScreenState();
+}
+
+class _SettingsScreenState extends State<SettingsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Admin Panel')),
+      appBar: AppBar(title: const Text('Library Settings')),
       body: ListView(
         children: [
-          adminTile('Delete All Books', () => books.clear()),
-          adminTile('Delete Downloaded Books', () => downloadedBooks.clear()),
-          adminTile('Delete Feedbacks', () => feedbacks.clear()),
+          adminTile(
+              'Delete Feedbacks', () => setState(() => feedbacks.clear())),
           const Divider(),
           const Padding(
             padding: EdgeInsets.all(12),
             child: Text('Downloaded Books',
                 style: TextStyle(color: Color(0xFF00FF88), fontSize: 18)),
           ),
-          ...downloadedBooks.map((b) => ListTile(
-              title: Text(b
-                  .title))), //Ito yung malaking black part ng ADMIN screen, sya rin yugn may sublabel na 'Downloaded Books'
+          ...downloadedBooks
+              .map((b) => ListTile(
+                    title: Text(b.title),
+                    trailing: IconButton(
+                      icon: const Icon(Icons.delete, color: Colors.redAccent),
+                      onPressed: () => _showDeleteDialog('delete "${b.title}"',
+                          () => setState(() => downloadedBooks.remove(b))),
+                    ),
+                  ))
+              .toList(),
         ],
       ),
     );
@@ -449,11 +581,39 @@ Like yung mga buttons na nasa adminTile methods
 
   Widget adminTile(String t, VoidCallback a) {
     return ListTile(
-      leading: const Icon(Icons.delete,
-          color: Colors
-              .redAccent), //Alam mo na ito, sila yung basurahan na icon Sai
+      leading: const Icon(Icons.delete, color: Colors.redAccent),
       title: Text(t),
-      onTap: a,
+      onTap: () => _showDeleteDialog(t, a),
+    );
+  }
+
+  void _showDeleteDialog(String title, VoidCallback action) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: const Color(0xFF0A0F0C),
+          title: Text('Confirm Delete',
+              style: const TextStyle(color: Color(0xFF00FF88))),
+          content: Text('Are you sure you want to $title?',
+              style: const TextStyle(color: Colors.white)),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Cancel',
+                  style: TextStyle(color: Color(0xFF00FF88))),
+            ),
+            TextButton(
+              onPressed: () {
+                action();
+                Navigator.of(context).pop();
+              },
+              child: const Text('Delete',
+                  style: TextStyle(color: Colors.redAccent)),
+            ),
+          ],
+        );
+      },
     );
   }
 }
