@@ -462,7 +462,8 @@ Kasma na rin dito ay yng mga handlers
               children: [
                 TextField(
                   controller: comment,
-                  decoration: const InputDecoration(labelText: 'Anonymous Comment'),
+                  decoration:
+                      const InputDecoration(labelText: 'Anonymous Comment'),
                 ),
                 DropdownButton<int>(
                   value: rating,
@@ -478,12 +479,9 @@ Kasma na rin dito ay yng mga handlers
                 DropdownButton<String>(
                   value: year,
                   isExpanded: true,
-                  items: [
-                    '1st Year',
-                    '2nd Year',
-                    '3rd Year',
-                    '4th Year'
-                  ].map((y) => DropdownMenuItem(value: y, child: Text(y))).toList(),
+                  items: ['1st Year', '2nd Year', '3rd Year', '4th Year']
+                      .map((y) => DropdownMenuItem(value: y, child: Text(y)))
+                      .toList(),
                   onChanged: (v) => setState(() => year = v!),
                 ),
                 ElevatedButton(
@@ -564,16 +562,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
             child: Text('Downloaded Books',
                 style: TextStyle(color: Color(0xFF00FF88), fontSize: 18)),
           ),
-          ...downloadedBooks
-              .map((b) => ListTile(
-                    title: Text(b.title),
-                    trailing: IconButton(
-                      icon: const Icon(Icons.delete, color: Colors.redAccent),
-                      onPressed: () => _showDeleteDialog('delete "${b.title}"',
-                          () => setState(() => downloadedBooks.remove(b))),
-                    ),
-                  ))
-              .toList(),
+          ...downloadedBooks.map((b) => ListTile(
+                title: Text(b.title),
+                trailing: IconButton(
+                  icon: const Icon(Icons.delete, color: Colors.redAccent),
+                  onPressed: () => _showDeleteDialog('delete "${b.title}"',
+                      () => setState(() => downloadedBooks.remove(b))),
+                ),
+              )),
         ],
       ),
     );
